@@ -1,5 +1,5 @@
 import { Searchbar } from './Searchbar/Searchbar';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
@@ -8,27 +8,51 @@ import { ModalWindow } from './Modal/Modal';
 
 import { fetchQuery } from './API';
 
-export class App extends Component {
-  state = {
-    page: 1,
-    query: '',
-    images: [],
-    isLoading: false,
-    showModal: false,
-    loadMore: false,
-    openedImg: '',
-  };
+export const App = () => {
+  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [loadMore, setLoadMore] = useState(false);
+  const [openedImg, setOpenedImg] = useState('');
 
-  getQuery = ({ query, images }) => {
-    if (query.trim() !== this.state.query) {
-      this.setState({ query: query, images: images, page: 1 });
-    }
+
+  const getQuery = (props) => {
+    console.log(props)
+    // if (newQuery.trim() !== query) {
+    //   setQuery(newQuery);
+    //   setImages(images);
+    //   setPage(1)
+    // }
   };
-  async componentDidUpdate(prevProps, prevState) {
-    const { page, query } = this.state;
-    if (page !== prevState.page || query !== prevState.query) {
-      try {
-        this.setState({ isLoading: true });
+  // async function componentDidUpdate(prevProps, prevState) {
+  //   const { page, query } = this.state;
+  //   if (page !== prevState.page || query !== prevState.query) {
+  //     try {
+  //       this.setState({ isLoading: true });
+  //       const data = await fetchQuery(page, query);
+  //       if (data.hits.length === 0) {
+  //         Notiflix.Notify.failure(
+  //           "Sorry, we couldn't find any matches for your query"
+  //         );
+  //         return;
+  //       }
+  //       this.setState(prevState => ({
+  //         images: [...prevState.images, ...data.hits],
+  //         loadMore: page < Math.ceil(data.totalHits / 12),
+  //       }));
+  //     } catch (err) {
+  //       Notiflix.Notify.failure('Something went wrong, please try again later');
+  //     } finally {
+  //       this.setState({ isLoading: false });
+  //     }
+  //   }
+  // }
+   useEffect(()=>{
+    const fetchData = async ()=>{
+        setIsLoading(true);
+        try{
         const data = await fetchQuery(page, query);
         if (data.hits.length === 0) {
           Notiflix.Notify.failure(
@@ -36,49 +60,43 @@ export class App extends Component {
           );
           return;
         }
-        this.setState(prevState => ({
-          images: [...prevState.images, ...data.hits],
-          loadMore: page < Math.ceil(data.totalHits / 12),
-        }));
-      } catch (err) {
+        setImages([...images, ...data.hits]);
+        setLoadMore(page < Math.ceil(data.totalHits / 12));
+      }catch (err) {
         Notiflix.Notify.failure('Something went wrong, please try again later');
       } finally {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       }
-    }
-  }
-  onLoadMore = () => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1,
-      };
-    });
-    return;
+      }
+      fetchData()
+  }, [page, query])
+
+  const onLoadMore = () => {
+    setPage(page + 1);
   };
-  onImageClick = img => {
-    this.setState({ showModal: true, openedImg: img });
+  const onImageClick = img => {
+    setShowModal(true);
+    setOpenedImg(img);
   };
-  onImageClose = () => {
-    this.setState({ showModal: false, openedImg: '' });
+  const onImageClose = () => {
+    setShowModal(false);
+    setOpenedImg('');
   };
-  render() {
-    const { showModal, openedImg, images, isLoading, loadMore } = this.state;
     return (
       <div className="app">
         <ModalWindow
           props={{ showModal, openedImg }}
-          onImageClose={this.onImageClose}
+          onImageClose={onImageClose}
         />
-        <Searchbar onSubmit={this.getQuery} />
+        <Searchbar onSubmit={getQuery} />
 
         {isLoading && <Loader />}
         {images.length > 0 && (
           <>
-            <ImageGallery images={images} onClick={this.onImageClick} />
-            {loadMore && <Button onLoadMore={this.onLoadMore} />}
+            <ImageGallery images={images} onClick={onImageClick} />
+            {loadMore && <Button onLoadMore={onLoadMore} />}
           </>
         )}
       </div>
     );
-  }
 }
