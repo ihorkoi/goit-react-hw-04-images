@@ -17,43 +17,17 @@ export const App = () => {
   const [loadMore, setLoadMore] = useState(false);
   const [openedImg, setOpenedImg] = useState('');
 
-
-  const getQuery = (props) => {
-    console.log(props)
-    // if (newQuery.trim() !== query) {
-    //   setQuery(newQuery);
-    //   setImages(images);
-    //   setPage(1)
-    // }
-  };
-  // async function componentDidUpdate(prevProps, prevState) {
-  //   const { page, query } = this.state;
-  //   if (page !== prevState.page || query !== prevState.query) {
-  //     try {
-  //       this.setState({ isLoading: true });
-  //       const data = await fetchQuery(page, query);
-  //       if (data.hits.length === 0) {
-  //         Notiflix.Notify.failure(
-  //           "Sorry, we couldn't find any matches for your query"
-  //         );
-  //         return;
-  //       }
-  //       this.setState(prevState => ({
-  //         images: [...prevState.images, ...data.hits],
-  //         loadMore: page < Math.ceil(data.totalHits / 12),
-  //       }));
-  //     } catch (err) {
-  //       Notiflix.Notify.failure('Something went wrong, please try again later');
-  //     } finally {
-  //       this.setState({ isLoading: false });
-  //     }
-  //   }
-  // }
-   useEffect(()=>{
-    const fetchData = async ()=>{
-        setIsLoading(true);
-        try{
-        const data = await fetchQuery(page, query);
+  function getQuery(newQuery) {
+    if (newQuery.trim() !== query) {
+      setQuery(newQuery);
+      setImages([]);
+      setPage(1);
+    }
+  }
+  function updateImgState() {
+    setIsLoading(true);
+    fetchQuery(page, query)
+      .then(data => {
         if (data.hits.length === 0) {
           Notiflix.Notify.failure(
             "Sorry, we couldn't find any matches for your query"
@@ -62,14 +36,18 @@ export const App = () => {
         }
         setImages([...images, ...data.hits]);
         setLoadMore(page < Math.ceil(data.totalHits / 12));
-      }catch (err) {
+      })
+      .catch(err => {
         Notiflix.Notify.failure('Something went wrong, please try again later');
-      } finally {
-        setIsLoading(false);
-      }
-      }
-      fetchData()
-  }, [page, query])
+      })
+      .finally(() => setIsLoading(false));
+  }
+  useEffect(() => {
+    if (query !== '') {
+      updateImgState();
+    }
+    // eslint-disable-next-line
+  }, [page, query]);
 
   const onLoadMore = () => {
     setPage(page + 1);
@@ -82,21 +60,21 @@ export const App = () => {
     setShowModal(false);
     setOpenedImg('');
   };
-    return (
-      <div className="app">
-        <ModalWindow
-          props={{ showModal, openedImg }}
-          onImageClose={onImageClose}
-        />
-        <Searchbar onSubmit={getQuery} />
+  return (
+    <div className="app">
+      <ModalWindow
+        props={{ showModal, openedImg }}
+        onImageClose={onImageClose}
+      />
+      <Searchbar onSubmit={getQuery} />
 
-        {isLoading && <Loader />}
-        {images.length > 0 && (
-          <>
-            <ImageGallery images={images} onClick={onImageClick} />
-            {loadMore && <Button onLoadMore={onLoadMore} />}
-          </>
-        )}
-      </div>
-    );
-}
+      {isLoading && <Loader />}
+      {images.length > 0 && (
+        <>
+          <ImageGallery images={images} onClick={onImageClick} />
+          {loadMore && <Button onLoadMore={onLoadMore} />}
+        </>
+      )}
+    </div>
+  );
+};
