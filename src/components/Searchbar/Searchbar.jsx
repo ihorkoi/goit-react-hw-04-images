@@ -5,7 +5,7 @@ export const Searchbar = ({ onSubmit }) => {
     evt.preventDefault();
     const form = evt.target;
     const query = form.elements.query.value;
-    onSubmit(query, []);
+    onSubmit(query);
     form.reset();
   };
   return (

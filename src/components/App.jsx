@@ -24,33 +24,36 @@ export const App = () => {
       setPage(1);
     }
   }
-  function updateImgState() {
-    setIsLoading(true);
-    fetchQuery(page, query)
-      .then(data => {
-        if (data.hits.length === 0) {
-          Notiflix.Notify.failure(
-            "Sorry, we couldn't find any matches for your query"
-          );
-          return;
-        }
-        setImages([...images, ...data.hits]);
-        setLoadMore(page < Math.ceil(data.totalHits / 12));
-      })
-      .catch(err => {
-        Notiflix.Notify.failure('Something went wrong, please try again later');
-      })
-      .finally(() => setIsLoading(false));
-  }
+
   useEffect(() => {
-    if (query !== '') {
-      updateImgState();
+    if (!query) {
+      return;
     }
-    // eslint-disable-next-line
+    function updateImgState() {
+      setIsLoading(true);
+      fetchQuery(page, query)
+        .then(data => {
+          if (data.hits.length === 0) {
+            Notiflix.Notify.failure(
+              "Sorry, we couldn't find any matches for your query"
+            );
+            return;
+          }
+          setImages(prevState => [...prevState, ...data.hits]);
+          setLoadMore(page < Math.ceil(data.totalHits / 12));
+        })
+        .catch(err => {
+          Notiflix.Notify.failure(
+            'Something went wrong, please try again later'
+          );
+        })
+        .finally(() => setIsLoading(false));
+    }
+    updateImgState();
   }, [page, query]);
 
   const onLoadMore = () => {
-    setPage(page + 1);
+    setPage(prevState => prevState + 1);
   };
   const onImageClick = img => {
     setShowModal(true);
